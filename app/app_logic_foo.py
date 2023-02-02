@@ -21,8 +21,9 @@ def post_in_sql_dev_status(request):
                                db=os.getenv('SQL_DB'),
                                charset='utf8mb4', )
         cur = conn.cursor()
-        sql = """INSERT INTO %s VALUES (%s, %s, %s, %s, %s, %s)"""
-        cur.execute(sql, (os.getenv('SQL_TABLE'), obs_code, date0, dev_code, date1, filename, md5_hash))
+        mySql_insert_query  = """INSERT %s"""%os.getenv('SQL_TABLE') +"""(obs, dev, date0, date1, filename, md5) VALUES (%s, %s, %s, %s, %s, %s)"""
+        insert_tuple = (obs_code, dev_code, date0, date1, filename, md5_hash)
+        cur.execute(mySql_insert_query, insert_tuple)
         conn.commit()
         conn.close()
         return 1
@@ -37,27 +38,88 @@ def get_from_sql_dev_status(request):
     date0_to = int(request['date0_to'])
     date1_from = int(request['date1_from'])
     date1_to = int(request['date1_to'])
-    filename = str(request['filename']).lower()
+    #filename = str(request['filename']).lower()
     dev_code = str(request['dev']).upper()
 
     try:
-        #   подключение к sql таблице на сервере imagdb.gcras.ru
+
         db = pymysql.connect(host=os.getenv('SQL_HOST'), port=3306,
                              user=os.getenv('SQL_USER'),
                              passwd=os.getenv('SQL_PSW'),
                              db=os.getenv('SQL_DB'),
                              charset='utf8mb4', )
 
-        request = "SELECT * FROM %s WHERE obs='%s' AND dev='%s' AND filename='%s' AND" \
+        request_to_sql = "SELECT * FROM %s WHERE obs='%s' AND dev='%s' AND " \
                   "date0 BETWEEN %s AND %s AND date1 BETWEEN %s AND %s" % (
-                      os.getenv('SQL_TABLE'), obs_code, dev_code, filename,
+                      os.getenv('SQL_TABLE'), obs_code, dev_code,
                       date0_from, date0_to, date1_from, date1_to)
+        print(request_to_sql)
         cur = db.cursor()
-        cur.execute(request)
+        cur.execute(request_to_sql)
         respond = cur.fetchall()
         db.close()
-        df = pd.DataFrame(respond)
+        print(respond)
+        print(type(respond))
+        if len(respond) == 0:
+            return {}
+        else:
+            status_dict = {'obs': [],
+                           'date0': [],
+                           'dev': [],
+                           'date1': [],
+                           'filename': [],
+                           'md5': []
+                           }
+            for row in respond:
+                # obs_code, dev_code, date0, date1, filename, md5_hash
+                #    0          1       2      3        4        5
+                status_dict['obs'].append(row[0])
+                status_dict['dev'].append(row[1])
+                status_dict['date0'].append(row[2])
+                status_dict['date1'].append(row[3])
+                status_dict['filename'].append(row[4])
+                status_dict['md5'].append(hashlib.md5(row[5]).hexdigest())
+
+            return status_dict
+    except Exception as E:
+        print(E)
         return {}
+
+def get_last_dev_status_from_sql(request):
+    obs_code = str(request['obs']).upper()
+    dev_code = str(request['dev']).upper()
+
+    try:
+        db = pymysql.connect(host=os.getenv('SQL_HOST'), port=3306,
+                             user=os.getenv('SQL_USER'),
+                             passwd=os.getenv('SQL_PSW'),
+                             db=os.getenv('SQL_DB'),
+                             charset='utf8mb4', )
+        request_to_sql = """SELECT * FROM %s WHERE obs='%s' AND dev='%s' ORDER BY date0 DESC LIMIT 1""" \
+                         % (os.getenv('SQL_TABLE'), obs_code, dev_code)
+        cur = db.cursor()
+        cur.execute(request_to_sql)
+        respond = cur.fetchall()
+        db.close()
+
+        if len(respond) == 0:
+            return {}
+        else:
+            status_dict = {'obs': [],
+                           'date0': [],
+                           'dev': [],
+                           'date1': [],
+                           'filename': [],
+                           'md5': []
+                           }
+            row = respond[0]
+            status_dict['obs'].append(row[0])
+            status_dict['dev'].append(row[1])
+            status_dict['date0'].append(row[2])
+            status_dict['date1'].append(row[3])
+            status_dict['filename'].append(row[4])
+            status_dict['md5'].append(hashlib.md5(row[5]).hexdigest())
+            return status_dict
     except Exception as E:
         print(E)
         return {}
