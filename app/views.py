@@ -6,10 +6,14 @@ import json
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 from app.app_logic_foo import *
+from check_dev.settings import BASE_DIR
 # Create your views here.
 
 def index(request):
-    return HttpResponse("Hello, curious.")
+    f = open(os.path.join(BASE_DIR, 'readme.txt'), 'r')
+    file_content = f.read()
+    f.close()
+    return HttpResponse(file_content, content_type="text/plain")
 
 @csrf_exempt
 def post_dev_status(request):
