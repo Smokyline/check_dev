@@ -1,8 +1,5 @@
-from sqlalchemy import create_engine
-from sqlalchemy.sql import text
 import hashlib
 import pymysql
-import pandas as pd
 import os
 
 

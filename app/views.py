@@ -24,17 +24,10 @@ def post_dev_status(request):
 def get_dev_status(request):
     request_dict = json.loads(request.body)
     status_dict = get_from_sql_dev_status(request_dict)
-    print(status_dict)
-    if len(status_dict) > 0:
-        return JsonResponse(status_dict, safe=False)
-    else:
-        return Http404
+    return JsonResponse(status_dict, safe=False)
 
 @csrf_exempt
 def get_last_dev_status(request):
     request_dict = json.loads(request.body)
     last_status_dict = get_last_dev_status_from_sql(request_dict)
-    if len(last_status_dict) > 0:
-        return JsonResponse(last_status_dict, safe=False)
-    else:
-        return Http404
+    return JsonResponse(last_status_dict, safe=False)
