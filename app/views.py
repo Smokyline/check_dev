@@ -10,19 +10,22 @@ from check_dev.settings import BASE_DIR
 # Create your views here.
 
 def index(request):
-    f = open(os.path.join(BASE_DIR, 'readme.txt'), 'r')
+    f = open(os.path.join(BASE_DIR, 'readme.txt'), 'r', encoding='utf-8')
     file_content = f.read()
     f.close()
     return HttpResponse(file_content, content_type="text/plain")
+
+def status(request):
+    return render(request, 'status.html')
 
 @csrf_exempt
 def post_dev_status(request):
     request_dict = json.loads(request.body, strict=False)
     posting_status = post_in_sql_dev_status(request_dict)
     if posting_status:
-        return JsonResponse({'status': 0}, safe=False)
-    else:
         return JsonResponse({'status': 1}, safe=False)
+    else:
+        return JsonResponse({'status': 0}, safe=False)
 
 @csrf_exempt
 def get_dev_status(request):

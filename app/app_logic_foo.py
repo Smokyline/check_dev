@@ -12,21 +12,31 @@ def post_in_sql_dev_status(request):
     md5_hash = hashlib.md5(str(request['md5']).encode('utf-8')).digest()  # 16 byte binary file hash
 
     try:
+        v_count = int(request['v_count'])
+    except Exception as e:
+        v_count = -1
+
+    try:
+        filesize = int(request['filesize'])
+    except Exception as e:
+        filesize = -1
+
+    try:
         conn = pymysql.connect(host=os.getenv('SQL_HOST'), port=3306,
                                user=os.getenv('SQL_USER'),
                                passwd=os.getenv('SQL_PSW'),
                                db=os.getenv('SQL_DB'),
                                charset='utf8mb4', )
         cur = conn.cursor()
-        mySql_insert_query  = """INSERT %s"""%os.getenv('SQL_TABLE') +"""(obs, dev, date0, date1, filename, md5) VALUES (%s, %s, %s, %s, %s, %s)"""
-        insert_tuple = (obs_code, dev_code, date0, date1, filename, md5_hash)
+        mySql_insert_query  = """INSERT %s"""%os.getenv('SQL_TABLE') +"""(obs, dev, date0, date1, filename, md5) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+        insert_tuple = (obs_code, dev_code, date0, date1, filename, md5_hash, v_count, filesize)
         cur.execute(mySql_insert_query, insert_tuple)
         conn.commit()
         conn.close()
-        return 1
+        return 0
     except Exception as E:
         print(E)
-        return 0
+        return 1
 
 
 def get_from_sql_dev_status(request):
