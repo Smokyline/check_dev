@@ -13,7 +13,7 @@ def index(request):
     f = open(os.path.join(BASE_DIR, 'readme.txt'), 'r', encoding='utf-8')
     file_content = f.read()
     f.close()
-    return HttpResponse(file_content, content_type="text/plain")
+    return HttpResponse(file_content, content_type="text/plain; charset=utf8")
 
 def status(request):
     return render(request, 'status.html')

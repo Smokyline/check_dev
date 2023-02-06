@@ -12,9 +12,9 @@ def post_in_sql_dev_status(request):
     md5_hash = hashlib.md5(str(request['md5']).encode('utf-8')).digest()  # 16 byte binary file hash
 
     try:
-        v_count = int(request['v_count'])
+        ucount = int(request['ucount'])
     except Exception as e:
-        v_count = -1
+        ucount = -1
 
     try:
         filesize = int(request['filesize'])
@@ -28,8 +28,8 @@ def post_in_sql_dev_status(request):
                                db=os.getenv('SQL_DB'),
                                charset='utf8mb4', )
         cur = conn.cursor()
-        mySql_insert_query  = """INSERT %s"""%os.getenv('SQL_TABLE') +"""(obs, dev, date0, date1, filename, md5) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-        insert_tuple = (obs_code, dev_code, date0, date1, filename, md5_hash, v_count, filesize)
+        mySql_insert_query  = """INSERT %s"""%os.getenv('SQL_TABLE') +"""(obs, dev, date0, date1, filename, md5, ucount, filesize) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+        insert_tuple = (obs_code, dev_code, date0, date1, filename, md5_hash, ucount, filesize)
         cur.execute(mySql_insert_query, insert_tuple)
         conn.commit()
         conn.close()
@@ -60,13 +60,11 @@ def get_from_sql_dev_status(request):
                   "date0 BETWEEN %s AND %s AND date1 BETWEEN %s AND %s" % (
                       os.getenv('SQL_TABLE'), obs_code, dev_code,
                       date0_from, date0_to, date1_from, date1_to)
-        print(request_to_sql)
         cur = db.cursor()
         cur.execute(request_to_sql)
         respond = cur.fetchall()
         db.close()
-        print(respond)
-        print(type(respond))
+
         if len(respond) == 0:
             return {}
         else:
@@ -75,7 +73,9 @@ def get_from_sql_dev_status(request):
                            'dev': [],
                            'date1': [],
                            'filename': [],
-                           'md5': []
+                           'md5': [],
+                           'ucount': [],
+                           'filesize': []
                            }
             for row in respond:
                 # obs_code, dev_code, date0, date1, filename, md5_hash
@@ -86,6 +86,10 @@ def get_from_sql_dev_status(request):
                 status_dict['date1'].append(row[3])
                 status_dict['filename'].append(row[4])
                 status_dict['md5'].append(hashlib.md5(row[5]).hexdigest())
+                status_dict['ucount'].append(row[6])
+                status_dict['filesize'].append(row[7])
+
+
 
             return status_dict
     except Exception as E:
@@ -112,20 +116,16 @@ def get_last_dev_status_from_sql(request):
         if len(respond) == 0:
             return {}
         else:
-            status_dict = {'obs': [],
-                           'date0': [],
-                           'dev': [],
-                           'date1': [],
-                           'filename': [],
-                           'md5': []
-                           }
             row = respond[0]
-            status_dict['obs'].append(row[0])
-            status_dict['dev'].append(row[1])
-            status_dict['date0'].append(row[2])
-            status_dict['date1'].append(row[3])
-            status_dict['filename'].append(row[4])
-            status_dict['md5'].append(hashlib.md5(row[5]).hexdigest())
+            status_dict = {'obs': row[0],
+                           'dev': row[1],
+                           'date0': row[2],
+                           'date1': row[3],
+                           'filename': row[4],
+                           'md5': hashlib.md5(row[5]).hexdigest(),
+                           'ucount': row[6],
+                           'filesize': row[7]
+                           }
             return status_dict
     except Exception as E:
         print(E)
