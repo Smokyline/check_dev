@@ -16,7 +16,7 @@ def index(request):
     return HttpResponse(file_content, content_type="text/plain; charset=utf8")
 
 def status(request):
-    return render(request, 'status.html')
+    return render(request, 'last-status.html')
 
 @csrf_exempt
 def post_dev_status(request):
