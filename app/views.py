@@ -1,3 +1,5 @@
+import os
+
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.db import transaction
@@ -7,6 +9,8 @@ import datetime
 from django.views.decorators.csrf import csrf_exempt
 from app.app_logic_foo import *
 from check_dev.settings import BASE_DIR
+import jwt
+
 # Create your views here.
 
 def index(request):
@@ -20,6 +24,9 @@ def status(request):
 
 @csrf_exempt
 def post_dev_status(request):
+    """
+    Постинг статуса девайса в SQL таблицу
+    """
     request_dict = json.loads(request.body, strict=False)
     posting_status = post_in_sql_dev_status(request_dict)
     if posting_status:
@@ -29,12 +36,38 @@ def post_dev_status(request):
 
 @csrf_exempt
 def get_dev_status(request):
-    request_dict = json.loads(request.body)
-    status_dict = get_from_sql_dev_status(request_dict)
+    """
+    возвращает данные из таблицы за период
+    """
+
+
+    try:
+        # проверка токена
+        token = str(request.headers['Authorization']).split(' ')[1]
+        payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+
+        # получание данных за период
+        request_dict = json.loads(request.body)
+        status_dict = get_from_sql_dev_status(request_dict)
+    except Exception as e:
+        print(e)
+        status_dict = {}
+    # словарь пустой если ошибка или же за указанный период данных нет
     return JsonResponse(status_dict, safe=False)
+
 
 @csrf_exempt
 def get_last_dev_status(request):
     request_dict = json.loads(request.body)
     last_status_dict = get_last_dev_status_from_sql(request_dict)
     return JsonResponse(last_status_dict, safe=False)
+
+@csrf_exempt
+def check_token(request):
+    try:
+        token = str(request.headers['Authorization']).split(' ')[1]
+        payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+        print(payload_data)
+        return HttpResponse('token verification passed')
+    except Exception as e:
+        return HttpResponse('token verification failed')
