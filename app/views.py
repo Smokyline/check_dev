@@ -1,16 +1,20 @@
-import os
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.db import transaction
-# Create your views here.
 import json
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 from app.app_logic_foo import *
 from check_dev.settings import BASE_DIR
 import jwt
-
+import logging
+from logging.handlers import RotatingFileHandler
+from check_dev.settings import LOGGING
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(LOGGING['handlers']['file']['filename'], maxBytes=1000000, backupCount=5)
+logger.addHandler(handler)
 # Create your views here.
 
 def index(request):
@@ -39,18 +43,16 @@ def get_dev_status(request):
     """
     возвращает данные из таблицы за период
     """
-
-
     try:
         # проверка токена
         token = str(request.headers['Authorization']).split(' ')[1]
         payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
 
-        # получание данных за период
+        # получение данных за период
         request_dict = json.loads(request.body)
         status_dict = get_from_sql_dev_status(request_dict)
     except Exception as e:
-        print(e)
+        logger.error(e)
         status_dict = {}
     # словарь пустой если ошибка или же за указанный период данных нет
     return JsonResponse(status_dict, safe=False)
@@ -58,9 +60,22 @@ def get_dev_status(request):
 
 @csrf_exempt
 def get_last_dev_status(request):
-    request_dict = json.loads(request.body)
-    last_status_dict = get_last_dev_status_from_sql(request_dict)
+    """
+    возвращает последние данные
+    """
+    try:
+        # проверка токена
+        #token = str(request.headers['Authorization']).split(' ')[1]
+        #payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+
+        # получение последних данных из таблицы
+        request_dict = json.loads(request.body)
+        last_status_dict = get_last_dev_status_from_sql(request_dict)
+    except Exception as e:
+        logger.error(e)
+        last_status_dict = {}
     return JsonResponse(last_status_dict, safe=False)
+
 
 @csrf_exempt
 def check_token(request):

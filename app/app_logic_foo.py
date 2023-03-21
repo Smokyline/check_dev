@@ -1,7 +1,13 @@
 import hashlib
 import pymysql
 import os
-
+import logging
+from logging.handlers import RotatingFileHandler
+from check_dev.settings import LOGGING
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(LOGGING['handlers']['file']['filename'], maxBytes=1000000, backupCount=5)
+logger.addHandler(handler)
 
 def post_in_sql_dev_status(request):
     obs_code = str(request['obs']).upper()
@@ -35,7 +41,7 @@ def post_in_sql_dev_status(request):
         conn.close()
         return 0
     except Exception as E:
-        print(E)
+        logger.error(E)
         return 1
 
 
@@ -78,8 +84,8 @@ def get_from_sql_dev_status(request):
                            'filesize': []
                            }
             for row in respond:
-                # obs_code, dev_code, date0, date1, filename, md5_hash
-                #    0          1       2      3        4        5
+                # obs_code, dev_code, date0, date1, filename, md5_hash, ucount, filesize
+                #    0          1       2      3        4        5        6         7
                 status_dict['obs'].append(row[0])
                 status_dict['dev'].append(row[1])
                 status_dict['date0'].append(row[2])
@@ -93,7 +99,7 @@ def get_from_sql_dev_status(request):
 
             return status_dict
     except Exception as E:
-        print(E)
+        logger.error(E)
         return {}
 
 def get_last_dev_status_from_sql(request):
@@ -128,5 +134,5 @@ def get_last_dev_status_from_sql(request):
                            }
             return status_dict
     except Exception as E:
-        print(E)
+        logger.error(E)
         return {}
