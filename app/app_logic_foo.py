@@ -17,6 +17,7 @@ def post_in_sql_dev_status(request):
     filename = str(request['filename']).lower()
     md5_hash = hashlib.md5(str(request['md5']).encode('utf-8')).digest()  # 16 byte binary file hash
 
+
     try:
         ucount = int(request['ucount'])
     except Exception as e:
@@ -53,6 +54,13 @@ def get_from_sql_dev_status(request):
     date1_to = int(request['date1_to'])
     #filename = str(request['filename']).lower()
     dev_code = str(request['dev']).upper()
+    if obs_code == 'GC0':
+        try:
+            1/0
+        except Exception as e:
+            #logger.error(e)
+            #logger.error('error 1/0')
+            pass
 
     try:
 

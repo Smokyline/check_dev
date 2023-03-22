@@ -179,3 +179,5 @@ STATIC_ROOT = ""
 
 STATIC_OS_PATH = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ( os.path.join('static'), )
+
+LOG_TXT_PATH = os.path.join(BASE_DIR, 'logs')

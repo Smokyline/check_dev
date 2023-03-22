@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from app.app_logic_foo import *
 from check_dev.settings import BASE_DIR
 import jwt
+import time
+from app.logger import save_log
 import logging
 from logging.handlers import RotatingFileHandler
 from check_dev.settings import LOGGING
@@ -15,6 +17,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler(LOGGING['handlers']['file']['filename'], maxBytes=1000000, backupCount=5)
 logger.addHandler(handler)
+
+
 # Create your views here.
 
 def index(request):
@@ -50,6 +54,10 @@ def get_dev_status(request):
 
         # получение данных за период
         request_dict = json.loads(request.body)
+        ip = request.META.get('HTTP_X_REAL_IP')
+        save_log(time.time(), 'INFO', 'request', ip, request_dict['obs'], request_dict['dev'],
+                 request_dict['date0_from'], request_dict['date0_to'])
+
         status_dict = get_from_sql_dev_status(request_dict)
     except Exception as e:
         logger.error(e)

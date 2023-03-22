@@ -8,7 +8,7 @@ FROM python:3.10
 #RUN mkdir -p $DockerHOME
 
 # where your code lives
-WORKDIR /window-edit
+WORKDIR /check-device
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
