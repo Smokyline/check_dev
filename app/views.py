@@ -39,16 +39,18 @@ def post_dev_status(request):
         # проверка токена
         token = str(request.headers['Authorization']).split(' ')[1]
         payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
-
-        request_dict = json.loads(request.body, strict=False)
-        posting_status = post_in_sql_dev_status(request_dict)
-        if posting_status:
-            return JsonResponse({'status': 1}, safe=False)
-        else:
-            return JsonResponse({'status': 0}, safe=False)
     except Exception as e:
         logger.error(e)
+        return HttpResponse(status=401)
+
+    request_dict = json.loads(request.body, strict=False)
+    posting_status = post_in_sql_dev_status(request_dict)
+    if posting_status:
         return JsonResponse({'status': 1}, safe=False)
+    else:
+        return JsonResponse({'status': 0}, safe=False)
+
+
 
 
 
@@ -61,7 +63,10 @@ def get_dev_status(request):
         # проверка токена
         token = str(request.headers['Authorization']).split(' ')[1]
         payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
-
+    except Exception as e:
+        logger.error(e)
+        return HttpResponse(status=401)
+    try:
         # получение данных за период
         request_dict = json.loads(request.body)
         ip = request.META.get('HTTP_X_REAL_IP')
@@ -75,7 +80,6 @@ def get_dev_status(request):
     # словарь пустой если ошибка или же за указанный период данных нет
     return JsonResponse(status_dict, safe=False)
 
-
 @csrf_exempt
 def get_last_dev_status(request):
     """
@@ -85,13 +89,13 @@ def get_last_dev_status(request):
         # проверка токена
         token = str(request.headers['Authorization']).split(' ')[1]
         payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
-
-        # получение последних данных из таблицы
-        request_dict = json.loads(request.body)
-        last_status_dict = get_last_dev_status_from_sql(request_dict)
     except Exception as e:
         logger.error(e)
-        last_status_dict = {}
+        return HttpResponse(status=401)
+
+    # получение последних данных из таблицы
+    request_dict = json.loads(request.body)
+    last_status_dict = get_last_dev_status_from_sql(request_dict)
     return JsonResponse(last_status_dict, safe=False)
 
 @csrf_exempt
@@ -103,12 +107,11 @@ def get_all_obs(request):
         # проверка токена
         token = str(request.headers['Authorization']).split(' ')[1]
         payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
-
-        # получение последних данных из таблицы
-        all_obs_dict = get_all_obs_from_sql()
     except Exception as e:
         logger.error(e)
-        all_obs_dict = {}
+        return HttpResponse(status=401)
+
+    all_obs_dict = get_all_obs_from_sql()
     return JsonResponse(all_obs_dict, safe=False)
 
 @csrf_exempt
