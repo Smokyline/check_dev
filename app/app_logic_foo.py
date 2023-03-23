@@ -10,6 +10,9 @@ handler = RotatingFileHandler(LOGGING['handlers']['file']['filename'], maxBytes=
 logger.addHandler(handler)
 
 def post_in_sql_dev_status(request):
+    """
+    постинг в БД
+    """
     obs_code = str(request['obs']).upper()
     date0 = int(request['date0'])  # unix time sec
     dev_code = str(request['dev']).upper()
@@ -47,6 +50,9 @@ def post_in_sql_dev_status(request):
 
 
 def get_from_sql_dev_status(request):
+    """
+    получение данных с БД по станциям и времени
+    """
     obs_code = str(request['obs']).upper()
     date0_from = int(request['date0_from'])
     date0_to = int(request['date0_to'])
@@ -111,6 +117,9 @@ def get_from_sql_dev_status(request):
         return {}
 
 def get_last_dev_status_from_sql(request):
+    """
+    получение словаря с последними данными по обсерватории и устройству
+    """
     obs_code = str(request['obs']).upper()
     dev_code = str(request['dev']).upper()
 
@@ -141,6 +150,30 @@ def get_last_dev_status_from_sql(request):
                            'filesize': row[7]
                            }
             return status_dict
+    except Exception as E:
+        logger.error(E)
+        return {}
+
+def get_all_obs_from_sql():
+    """
+    получение списка всех доступных обсерваторий
+    """
+    try:
+        db = pymysql.connect(host=os.getenv('SQL_HOST'), port=3306,
+                             user=os.getenv('SQL_USER'),
+                             passwd=os.getenv('SQL_PSW'),
+                             db=os.getenv('SQL_DB'),
+                             charset='utf8mb4', )
+        request_to_sql = """SELECT DISTINCT obs FROM %s;""" % (os.getenv('SQL_TABLE'))
+        cur = db.cursor()
+        cur.execute(request_to_sql)
+        respond = cur.fetchall()
+        db.close()
+        if len(respond) == 0:
+            return {}
+        else:
+            all_obs_dist = {'obs_list': [obs[0] for obs in respond]}
+            return all_obs_dist
     except Exception as E:
         logger.error(E)
         return {}

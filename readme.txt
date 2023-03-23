@@ -1,6 +1,6 @@
 Сервис по проверке работы устройства на обсерватории.
 
-Существует 4 возможных запроса:
+Существует 5 возможных запроса:
 1) Запостить в базу данных информацию об устройстве
 POST реквест по адресу http://host:8001/post-status/
 в JSON формате
@@ -78,8 +78,15 @@ GET реквест по адресу http://host:8001/get-last-status/ с Bearer
 
 для п2 и п3 - если данных нет за указанный период, будет возвращен пустой словарь {}
 
+4) Получить список всех обсерваторий в базе данных в JSON формате 
+реквест по адресу http://host:8001/get-all-obs/ с Bearer Token в headers 'Authorization'
+ответ - список станций в JSON формате по ключу 'obs_list'
+{
+"obs_list": ["GC0", "IRT"]
+}
 
-4) Проверка подлинности токена авторизации 
+
+5) Проверка подлинности токена авторизации 
 GET запрос по адресу http://host:8001/check-token/
 содержащий Bearer Token в headers 'Authorization'
 При успешной проверке возвращает 'token verification passed', если нет, то 'token verification failed'
@@ -140,4 +147,14 @@ docker tag %TAG% docker.gcras.ru/docker-check-dev
 docker push docker.gcras.ru/docker-check-dev
 ssh user@serverIP
 docker pull docker.gcras.ru/docker-check-dev
-docker run -d -p 8001:8001 docker.gcras.ru/docker-check-dev
+docker run -d -it --rm -v /tmp/logs:/check-device/logs -p 8001:8001 docker.gcras.ru/docker-check-dev
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+Логи
+
+В проекте и Docker-контейнере логи ошибок записываются в файл /logs/debug.log. 
+Логи запросов за временной период  c ip  записываются в файл /logs/ip_request.log в виде:
+	- %Дата% %Время% INFO request %IP% %OBS% %DEVICE% %time0_from% %time0_to% (time0 - дата поступления записи с устройства)
+При развертывании на сервере, файлы логов хранятся в папке /tmp/logs/

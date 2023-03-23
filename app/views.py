@@ -35,12 +35,22 @@ def post_dev_status(request):
     """
     Постинг статуса девайса в SQL таблицу
     """
-    request_dict = json.loads(request.body, strict=False)
-    posting_status = post_in_sql_dev_status(request_dict)
-    if posting_status:
+    try:
+        # проверка токена
+        token = str(request.headers['Authorization']).split(' ')[1]
+        payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+
+        request_dict = json.loads(request.body, strict=False)
+        posting_status = post_in_sql_dev_status(request_dict)
+        if posting_status:
+            return JsonResponse({'status': 1}, safe=False)
+        else:
+            return JsonResponse({'status': 0}, safe=False)
+    except Exception as e:
+        logger.error(e)
         return JsonResponse({'status': 1}, safe=False)
-    else:
-        return JsonResponse({'status': 0}, safe=False)
+
+
 
 @csrf_exempt
 def get_dev_status(request):
@@ -73,8 +83,8 @@ def get_last_dev_status(request):
     """
     try:
         # проверка токена
-        #token = str(request.headers['Authorization']).split(' ')[1]
-        #payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+        token = str(request.headers['Authorization']).split(' ')[1]
+        payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
 
         # получение последних данных из таблицы
         request_dict = json.loads(request.body)
@@ -84,6 +94,22 @@ def get_last_dev_status(request):
         last_status_dict = {}
     return JsonResponse(last_status_dict, safe=False)
 
+@csrf_exempt
+def get_all_obs(request):
+    """
+    возвращает список всех станций
+    """
+    try:
+        # проверка токена
+        token = str(request.headers['Authorization']).split(' ')[1]
+        payload_data = jwt.decode(jwt=token, key=os.getenv('SECRET_KEY'), algorithms=['HS256', ])
+
+        # получение последних данных из таблицы
+        all_obs_dict = get_all_obs_from_sql()
+    except Exception as e:
+        logger.error(e)
+        all_obs_dict = {}
+    return JsonResponse(all_obs_dict, safe=False)
 
 @csrf_exempt
 def check_token(request):
