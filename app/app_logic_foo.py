@@ -156,7 +156,7 @@ def get_last_dev_status_from_sql(request):
 
 def get_all_obs_from_sql():
     """
-    получение списка всех доступных обсерваторий
+    получение списка всех доступных обсерваторий и их устройств
     """
     try:
         db = pymysql.connect(host=os.getenv('SQL_HOST'), port=3306,
@@ -168,11 +168,20 @@ def get_all_obs_from_sql():
         cur = db.cursor()
         cur.execute(request_to_sql)
         respond = cur.fetchall()
-        db.close()
         if len(respond) == 0:
             return {}
         else:
-            all_obs_dist = {'obs_list': [obs[0] for obs in respond]}
+            all_obs_dist = {}
+            obs_list = [obs[0] for obs in respond]
+            for obs in obs_list:
+                request_to_sql_dev = """SELECT DISTINCT dev FROM %s WHERE obs='%s';""" \
+                                 % (os.getenv('SQL_TABLE'), obs)
+                cur = db.cursor()
+                cur.execute(request_to_sql_dev)
+                respond = cur.fetchall()
+                dev_list = [obs[0] for obs in respond]
+                all_obs_dist[obs] = dev_list
+            db.close()
             return all_obs_dist
     except Exception as E:
         logger.error(E)

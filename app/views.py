@@ -101,7 +101,7 @@ def get_last_dev_status(request):
 @csrf_exempt
 def get_all_obs(request):
     """
-    возвращает список всех станций
+    возвращает список всех обсерваторий и их устройств
     """
     try:
         # проверка токена
