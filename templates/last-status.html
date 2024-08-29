@@ -1,0 +1,284 @@
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Информация об устройствах</title>
+    <!-- jQuery -->
+    <script src="/static/js/jquery-3.2.1.min.js"></script>
+    <!-- Bootstrap -->
+    <script type="text/javascript" src="/static/js/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/js/bootstrap-3.3.7-dist/css/bootstrap.min.css" />
+    <!-- <link rel="shortcut icon" type="image/gif" href="http://www.gcras.ru/gcicon.gif" /> -->
+    <link rel="shortcut icon" type="image/x-icon" href="https://www.gcras.ru/favicon.ico" />
+
+    <!-- Include Required Prerequisites -->
+    <script type="text/javascript" src="/static/js/moment-with-locales.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/1000hz-bootstrap-validator/0.11.9/validator.js"></script>
+    <style>
+        body {
+            margin: 0;
+            /* Убираем отступы */
+            overflow-y: scroll;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button,
+        input::-webkit-clear-button {
+            /* display: none; <- Crashes Chrome on hover */
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+            /* <-- Apparently some margin are still there even though it's hidden */
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: none;
+            /* Firefox */
+        }
+
+        /* .invalid CSS class instead or pseudo selector */
+        input.invalid {
+            border-color: red;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+
+        }
+
+
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        /* tr:nth-child(even) {
+            background-color: #dddddd;
+        } */
+        /* .panel-body {
+        background: #E7E8FF;} */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <strong>
+                                Информация об устройствах
+                            </strong>
+                        </h4>
+                    </div>
+                    <div class="panel-body" style="text-align:justify;">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-12>
+                                    <br>
+                                    <div class=" table-responsive-md">
+                                    <table id="table_irt" class="table table-bordered" style="display: none">
+                                        <thead>
+                                            <tr>
+                                                <th>Обсерватория</th>
+                                                <th>Устройство</th>
+                                                <th>Время поступления данных</th>
+                                                <th>Время записи данных на устройстве</th>
+                                                <th>Имя файла</th>
+                                                <th>Md5-сумма файла</th>
+                                                <th>Количество строк данных</th>
+                                                <th>Размер файла</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                    <table id="table_gc0" class="table table-bordered" style="display: none">
+                                        <thead>
+                                            <tr>
+                                                <th>Обсерватория</th>
+                                                <th>Устройство</th>
+                                                <th>Время поступления данных</th>
+                                                <th>Время записи данных на устройстве</th>
+                                                <th>Имя файла</th>
+                                                <th>Md5-сумма файла</th>
+                                                <th>Количество строк данных</th>
+                                                <th>Размер файла</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                    <table id="table_wse" class="table table-bordered" style="display: none">
+                                        <thead>
+                                            <tr>
+                                                <th>Обсерватория</th>
+                                                <th>Устройство</th>
+                                                <th>Время поступления данных</th>
+                                                <th>Время записи данных на устройстве</th>
+                                                <th>Имя файла</th>
+                                                <th>Md5-сумма файла</th>
+                                                <th>Количество строк данных</th>
+                                                <th>Размер файла</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12" id="output">
+                    <br>
+                    <div id="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+
+    <script type="text/javascript">
+
+        const SERVICE_URL = 'http://192.168.0.18:8001/get-last-status/'
+
+        const devices = ["pos1", "pos4", "lemi018", "kvarc"];
+
+        var obsinfo;
+
+        $(document).ready(function () {
+
+            for (let dev in devices) {
+                $.ajax({
+                    type: 'POST',
+                    url: SERVICE_URL,
+                    data: JSON.stringify({ "obs": "IRT", "dev": devices[dev] }),
+                    contentType: "application/json; charset=utf-8",
+                    crossDomain: true,
+                    success: function (data) {
+                        var table_irt = "";
+                        obsinfo = new Map(Object.entries(data));
+                        if (obsinfo.size > 0) {
+                            console.log('success');
+                            console.log(obsinfo);
+
+                            table_irt += '<tr>';
+                            table_irt += '<td>' + obsinfo.get('obs') + '</td>';
+                            table_irt += '<td>' + obsinfo.get('dev') + '</td>';
+                            table_irt += '<td>' + moment.unix(obsinfo.get('date0')).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_irt += '<td>' + moment.unix(obsinfo.get('date1') / 1000).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_irt += '<td>' + obsinfo.get('filename') + '</td>';
+                            table_irt += '<td>' + obsinfo.get('md5') + '</td>';
+                            table_irt += '<td>' + obsinfo.get('ucount') + '</td>';
+                            table_irt += '<td>' + obsinfo.get('filesize') + '</td>';
+                            table_irt += '</tr>';
+
+                            $('#table_irt tbody').append(table_irt);
+                            $('#table_irt').show();
+                        }
+                    },
+                    error: function (code, exception) {
+                        console.log(code, exception);
+                        if (code.status !== 200) {
+                            console.log('request failed');
+                        }
+                    }
+                });
+            }
+
+            for (let dev in devices) {
+                $.ajax({
+                    type: 'POST',
+                    url: SERVICE_URL,
+                    data: JSON.stringify({ "obs": "GC0", "dev": devices[dev] }),
+                    contentType: "application/json; charset=utf-8",
+                    crossDomain: true,
+                    success: function (data) {
+                        var table_gc0 = "";
+                        obsinfo = new Map(Object.entries(data));
+                        if (obsinfo.size > 0) {
+                            console.log('success');
+                            console.log(obsinfo);
+
+                            table_gc0 += '<tr>';
+                            table_gc0 += '<td>' + obsinfo.get('obs') + '</td>';
+                            table_gc0 += '<td>' + obsinfo.get('dev') + '</td>';
+                            table_gc0 += '<td>' + moment.unix(obsinfo.get('date0')).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_gc0 += '<td>' + moment.unix(obsinfo.get('date1') / 1000).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_gc0 += '<td>' + obsinfo.get('filename') + '</td>';
+                            table_gc0 += '<td>' + obsinfo.get('md5') + '</td>';
+                            table_gc0 += '<td>' + obsinfo.get('ucount') + '</td>';
+                            table_gc0 += '<td>' + obsinfo.get('filesize') + '</td>';
+                            table_gc0 += '</tr>';
+
+                            $('#table_gc0 tbody').append(table_gc0);
+                            $('#table_gc0').show();
+                        }
+                    },
+                    error: function (code, exception) {
+                        console.log(code, exception);
+                        if (code.status !== 200) {
+                            console.log('request failed');
+                        }
+                    }
+                });
+            }
+
+            for (let dev in devices) {
+                $.ajax({
+                    type: 'POST',
+                    url: SERVICE_URL,
+                    data: JSON.stringify({ "obs": "WSE", "dev": devices[dev] }),
+                    contentType: "application/json; charset=utf-8",
+                    crossDomain: true,
+                    success: function (data) {
+                        var table_wse = "";
+                        obsinfo = new Map(Object.entries(data));
+                        if (obsinfo.size > 0) {
+                            console.log('success');
+                            console.log(obsinfo);
+
+                            table_wse += '<tr>';
+                            table_wse += '<td>' + obsinfo.get('obs') + '</td>';
+                            table_wse += '<td>' + obsinfo.get('dev') + '</td>';
+                            table_wse += '<td>' + moment.unix(obsinfo.get('date0')).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_wse += '<td>' + moment.unix(obsinfo.get('date1') / 1000).utc().format("YYYY-MM-DD HH:mm:ss") + ' UTC</td>';
+                            table_wse += '<td>' + obsinfo.get('filename') + '</td>';
+                            table_wse += '<td>' + obsinfo.get('md5') + '</td>';
+                            table_wse += '<td>' + obsinfo.get('ucount') + '</td>';
+                            table_wse += '<td>' + obsinfo.get('filesize') + '</td>';
+                            table_wse += '</tr>';
+
+                            $('#table_wse tbody').append(table_wse);
+                            $('#table_wse').show();
+                        }
+                    },
+                    error: function (code, exception) {
+                        console.log(code, exception);
+                        if (code.status !== 200) {
+                            console.log('request failed');
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+</body>
+
+</html>
